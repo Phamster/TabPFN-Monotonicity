@@ -98,8 +98,8 @@ Four strategies are implemented and compared (see `src/models.py`):
 |---|---|---|---|
 | 1. Post-hoc adapter (Stage 1 LR + Stage 2 TabPFN correction) | No | Economic validity audit (2026) | ✅ `PoMTabPFNAdapter` |
 | 2. Prior modification (FairPFN-style) | Yes — requires retraining | FairPFN (ICML 2025) | 🔲 HPC required |
-| 3. Context engineering | No | Kenfack et al. (2025) | 🔲 Planned |
-| 4. Output-head constraint (MonoNet-style) | Partial | MonoNet (2023) | 🔲 Planned |
+| 3. Context engineering | No | Kenfack et al. (2025) | ✅ `ContextEngineeredTabPFN` |
+| 4. Output-head constraint (MonoNet-style) | Partial — head only | MonoNet (2023) | ✅ `MonoHeadTabPFN` |
 
 ---
 
@@ -117,8 +117,9 @@ Four strategies are implemented and compared (see `src/models.py`):
 
 - [x] XGBoost PoM replication pipeline
 - [x] South German Credit (corrected) substitution
-- [x] Two-stage adapter (Strategy 1) implemented
+- [x] Two-stage adapter (Strategy 1) — `PoMTabPFNAdapter`
+- [x] Context engineering (Strategy 3) — `ContextEngineeredTabPFN`
+- [x] MonoNet-style output head (Strategy 4) — `MonoHeadTabPFN`
 - [ ] Real data download and full run (500 bootstrap)
 - [ ] TabPFN authentication and Phase 2 run
-- [ ] Context engineering (Strategy 3)
 - [ ] Final figures and write-up

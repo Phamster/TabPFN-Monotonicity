@@ -30,7 +30,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from src.datasets import UCI_DATASETS, KAGGLE_DATASETS, load_south_german_credit
 from src.metrics  import compute_pom, format_pom_row
 from src.models   import (build_xgb_unconstrained, build_xgb_constrained,
-                           TabPFNWrapper, PoMTabPFNAdapter, TABPFN_AVAILABLE)
+                           TabPFNWrapper, PoMTabPFNAdapter,
+                           ContextEngineeredTabPFN, MonoHeadTabPFN,
+                           TABPFN_AVAILABLE)
 
 warnings.filterwarnings("ignore")
 
@@ -130,7 +132,7 @@ def run_tabpfn_experiment(loader_fn, dataset_key, max_train=8000):
           f"(elapsed {elapsed:.1f}s)")
     rows.append(row_raw)
 
-    # 2b. TabPFN with two-stage adapter (the actual thesis contribution)
+    # 2b. TabPFN with two-stage adapter (Strategy 1)
     print("  Running: TabPFN two-stage adapter (constrained) vs raw TabPFN")
     raw_tfm     = TabPFNWrapper()
     adapted_tfm = PoMTabPFNAdapter(mono_map=mono_map)
@@ -145,6 +147,38 @@ def run_tabpfn_experiment(loader_fn, dataset_key, max_train=8000):
     print(f"  PoM AUC (adapter cost): {row_adapted['pom_auc_pct']:+.3f}%  "
           f"(elapsed {elapsed:.1f}s)")
     rows.append(row_adapted)
+
+    # 2c. Context Engineering (Strategy 3)
+    print("  Running: Context-engineered TabPFN vs raw TabPFN")
+    raw_tfm2  = TabPFNWrapper()
+    ctx_tfm   = ContextEngineeredTabPFN(mono_map=mono_map)
+
+    t0 = time.time()
+    result_ctx = compute_pom(raw_tfm2, ctx_tfm,
+                             X_train, y_train, X_test, y_test,
+                             n_bootstrap=min(N_BOOTSTRAP, 200))
+    elapsed = time.time() - t0
+    row_ctx = format_pom_row(label + " [TabPFN raw vs TabPFN+context]",
+                             "TabPFN_context", result_ctx)
+    print(f"  PoM AUC (context eng. cost): {row_ctx['pom_auc_pct']:+.3f}%  "
+          f"(elapsed {elapsed:.1f}s)")
+    rows.append(row_ctx)
+
+    # 2d. MonoNet-style output head (Strategy 4)
+    print("  Running: MonoHead TabPFN vs raw TabPFN")
+    raw_tfm3   = TabPFNWrapper()
+    mono_head  = MonoHeadTabPFN(mono_map=mono_map)
+
+    t0 = time.time()
+    result_head = compute_pom(raw_tfm3, mono_head,
+                              X_train, y_train, X_test, y_test,
+                              n_bootstrap=min(N_BOOTSTRAP, 200))
+    elapsed = time.time() - t0
+    row_head = format_pom_row(label + " [TabPFN raw vs TabPFN+monohead]",
+                              "TabPFN_monohead", result_head)
+    print(f"  PoM AUC (monohead cost):     {row_head['pom_auc_pct']:+.3f}%  "
+          f"(elapsed {elapsed:.1f}s)")
+    rows.append(row_head)
 
     return rows
 
